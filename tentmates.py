@@ -1,5 +1,6 @@
 import csv
 from itertools import permutations
+import random
 
 
 def read_csv(csv_file):
@@ -33,11 +34,26 @@ def build_tent_spots(tents_data):
     return result
 
 
-def initial_assignment(names, tent_spots):
+def assign(names, tent_spots):
     result = []
     for i in range(len(names)):
         result.append([names[i], tent_spots[i]])
     return result
+
+
+def random_swap(tent_spots):
+    # Randomly pick two distinct indices
+    index1, index2 = random.sample(range(len(tent_spots)), 2)
+    # Ensure the selected elements are different
+    while tent_spots[index1] == tent_spots[index2]:
+        index2 = random.randint(0, len(tent_spots) - 1)
+    # Swap the elements at the selected indices
+    tent_spots[index1], tent_spots[index2] = tent_spots[index2], tent_spots[index1]
+    return tent_spots
+
+
+def new_assignment(names, tent_spots):
+    return assign(names, random_swap(tent_spots))
 
 
 def split_on_tents(assignment):
@@ -84,31 +100,32 @@ def get_happiness(assignment, preferences):
     return happiness
 
 
+def are_arrays_same(array1, array2):
+    # Convert each array to a set of tuples for comparison
+    set1 = set(map(tuple, array1))
+    set2 = set(map(tuple, array2))
+
+    # Compare the sets
+    return set1 == set2
+
+
 if __name__ == "__main__":
+    BEST_HAPPINESS = 150
+
     preference_data = read_csv("tents-prefs.csv")
     tents_data = read_csv("tents-sizes.csv")
     tent_spots = build_tent_spots(tents_data)
     names = sorted(list(set(row[0] for row in preference_data)))
     preferences = build_preferences(preference_data, names)
     preferences_sorted = sorted(preferences, key=lambda x: int(x[2]), reverse=True)
-    assignment = initial_assignment(names, tent_spots)
+    assignment = assign(names, tent_spots)
     tent_groups = split_on_tents(assignment)
-    happiness = get_happiness(assignment, preferences)
 
-    # print(f"preference_data: {preference_data}")
-    # print()
-    # print(f"tents: {tents_data}")
-    # print()
-    print(f"preferences: ")
-    for element in preferences:
-        print(element)
-    # print(f"tent_spots: {tent_spots}")
-    # print(f"initial_assignment: {assignment}")
-    print(f"tent_groups: {tent_groups}")
-    print(f"happiness: {happiness}")
-
-    print(f"tent_1_happiness: {get_tent_happiness(tent_groups[0], preferences)}")
-    print(f"tent_2_happiness: {get_tent_happiness(tent_groups[1], preferences)}")
-    print(f"tent_3_happiness: {get_tent_happiness(tent_groups[2], preferences)}")
-    print(f"tent_4_happiness: {get_tent_happiness(tent_groups[3], preferences)}")
-    print(f"tent_5_happiness: {get_tent_happiness(tent_groups[4], preferences)}")
+    happiness = get_happiness(assignment, preference_data)
+    assignment = new_assignment(names, tent_spots)
+    while happiness < BEST_HAPPINESS:
+        assignment = new_assignment(names, tent_spots)
+        happiness = get_happiness(assignment, preference_data)
+    print(f"YAY you found happiness of at least {BEST_HAPPINESS}")
+    print(assignment)
+    print(happiness)
