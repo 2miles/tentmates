@@ -57,9 +57,31 @@ def split_on_tents(assignment):
     return result_lists
 
 
+def get_value(person1, person2, preferences):
+    value = 0
+    for row in preferences:
+        if row[0] == person1 and row[1] == person2:
+            value = row[2]
+            return int(value)
+    return 0
+
+
+def get_tent_happiness(tent, preferences):
+    total = 0
+    for i in range(len(tent)):
+        for j in range(len(tent)):
+            if j != i:
+                total += get_value(tent[i], tent[j], preferences)
+    return total
+
+
 def get_happiness(assignment, preferences):
     # split into seperate lists for each tent
+    happiness = 0
     tent_groups = split_on_tents(assignment)
+    for tent in tent_groups:
+        happiness += get_tent_happiness(tent, preferences)
+    return happiness
 
 
 if __name__ == "__main__":
@@ -71,14 +93,22 @@ if __name__ == "__main__":
     preferences_sorted = sorted(preferences, key=lambda x: int(x[2]), reverse=True)
     assignment = initial_assignment(names, tent_spots)
     tent_groups = split_on_tents(assignment)
+    happiness = get_happiness(assignment, preferences)
 
-    print(f"preference_data: {preference_data}")
-    print()
-    print(f"tents: {tents_data}")
-    print()
+    # print(f"preference_data: {preference_data}")
+    # print()
+    # print(f"tents: {tents_data}")
+    # print()
     print(f"preferences: ")
-    for element in preferences_sorted:
+    for element in preferences:
         print(element)
-    print(f"tent_spots: {tent_spots}")
-    print(f"initial_assignment: {assignment}")
+    # print(f"tent_spots: {tent_spots}")
+    # print(f"initial_assignment: {assignment}")
     print(f"tent_groups: {tent_groups}")
+    print(f"happiness: {happiness}")
+
+    print(f"tent_1_happiness: {get_tent_happiness(tent_groups[0], preferences)}")
+    print(f"tent_2_happiness: {get_tent_happiness(tent_groups[1], preferences)}")
+    print(f"tent_3_happiness: {get_tent_happiness(tent_groups[2], preferences)}")
+    print(f"tent_4_happiness: {get_tent_happiness(tent_groups[3], preferences)}")
+    print(f"tent_5_happiness: {get_tent_happiness(tent_groups[4], preferences)}")
