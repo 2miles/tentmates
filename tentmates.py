@@ -4,6 +4,10 @@ import random
 
 
 def read_csv(csv_file):
+    """
+    Read from CSV file into a data array \\
+    Return the data array
+    """
     data = []
     with open(csv_file, newline="") as f:
         reader = csv.reader(f)
@@ -12,21 +16,29 @@ def read_csv(csv_file):
     return data
 
 
-def build_preferences(preference_data, names):
-    all_pairs = [[name1, name2] for name1, name2 in permutations(names, 2)]
-    # Populate name pairs with data from prefs_data.
-    # If no preference was given between two people then mark that as a 0
-    for pref_row in preference_data:
-        for pair_row in all_pairs:
-            if pref_row[0] == pair_row[0] and pref_row[1] == pair_row[1]:
-                pair_row.append(pref_row[2])
-    for row in all_pairs:
-        if len(row) < 3:
-            row.append("0")
-    return all_pairs
+# def build_preferences(preference_data, names):
+#     """
+#     Return a list of the preferences of every combination of pairs of people.
+#     If no preference was given in the data file then assign it 0
+#     """
+#     all_pairs = [[name1, name2] for name1, name2 in permutations(names, 2)]
+#     # Populate name pairs with data from prefs_data.
+#     # If no preference was given between two people then mark that as a 0
+#     for pref_row in preference_data:
+#         for pair_row in all_pairs:
+#             if pref_row[0] == pair_row[0] and pref_row[1] == pair_row[1]:
+#                 pair_row.append(pref_row[2])
+#     for row in all_pairs:
+#         if len(row) < 3:
+#             row.append("0")
+#     return all_pairs
 
 
 def build_tent_spots(tents_data):
+    """
+    Given the tents data, return a list of all the spots available as a list of tent names \\
+    Return: `[a, a, b, b, c, c, c, d, d, d, d, e, e, e, e]`
+    """
     result = []
     for row in tents_data:
         for _ in range(int(row[1])):
@@ -35,6 +47,9 @@ def build_tent_spots(tents_data):
 
 
 def assign(names, tent_spots):
+    """
+    Associate each person to a tent spot.
+    """
     result = []
     for i in range(len(names)):
         result.append([names[i], tent_spots[i]])
@@ -52,7 +67,7 @@ def random_swap(tent_spots):
     return tent_spots
 
 
-def new_assignment(names, tent_spots):
+def rand_assignment(names, tent_spots):
     return assign(names, random_swap(tent_spots))
 
 
@@ -73,7 +88,10 @@ def split_on_tents(assignment):
     return result_lists
 
 
-def get_value(person1, person2, preferences):
+def individual_value(person1, person2, preferences):
+    """
+    Calculate one persons happiness value for another person.
+    """
     value = 0
     for row in preferences:
         if row[0] == person1 and row[1] == person2:
@@ -82,25 +100,31 @@ def get_value(person1, person2, preferences):
     return 0
 
 
-def get_tent_happiness(tent, preferences):
+def tent_value(tent, preferences):
+    """
+    Calculate the happiness value for an individual tent, given the preference data
+    """
     total = 0
     for i in range(len(tent)):
         for j in range(len(tent)):
             if j != i:
-                total += get_value(tent[i], tent[j], preferences)
+                total += individual_value(tent[i], tent[j], preferences)
     return total
 
 
-def get_happiness(assignment, preferences):
+def value(assignment, preferences):
     # split into seperate lists for each tent
-    happiness = 0
+    value = 0
     tent_groups = split_on_tents(assignment)
     for tent in tent_groups:
-        happiness += get_tent_happiness(tent, preferences)
-    return happiness
+        value += tent_value(tent, preferences)
+    return value
 
 
 def are_arrays_same(array1, array2):
+    """
+    Return whether or not two arrays have the same elements.
+    """
     # Convert each array to a set of tuples for comparison
     set1 = set(map(tuple, array1))
     set2 = set(map(tuple, array2))
@@ -110,22 +134,17 @@ def are_arrays_same(array1, array2):
 
 
 if __name__ == "__main__":
-    BEST_HAPPINESS = 150
+    BEST_HAPPINESS = 140
 
     preference_data = read_csv("tents-prefs.csv")
     tents_data = read_csv("tents-sizes.csv")
-    tent_spots = build_tent_spots(tents_data)
+    spots = build_tent_spots(tents_data)
     names = sorted(list(set(row[0] for row in preference_data)))
-    preferences = build_preferences(preference_data, names)
-    preferences_sorted = sorted(preferences, key=lambda x: int(x[2]), reverse=True)
-    assignment = assign(names, tent_spots)
-    tent_groups = split_on_tents(assignment)
-
-    happiness = get_happiness(assignment, preference_data)
-    assignment = new_assignment(names, tent_spots)
+    happiness = 0
+    assignment = []
     while happiness < BEST_HAPPINESS:
-        assignment = new_assignment(names, tent_spots)
-        happiness = get_happiness(assignment, preference_data)
+        assignment = rand_assignment(names, spots)
+        happiness = value(assignment, preference_data)
     print(f"YAY you found happiness of at least {BEST_HAPPINESS}")
     print(assignment)
     print(happiness)
