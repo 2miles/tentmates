@@ -1,5 +1,4 @@
 import csv
-from itertools import permutations
 import random
 
 
@@ -16,24 +15,6 @@ def read_csv(csv_file):
     return data
 
 
-# def build_preferences(preference_data, names):
-#     """
-#     Return a list of the preferences of every combination of pairs of people.
-#     If no preference was given in the data file then assign it 0
-#     """
-#     all_pairs = [[name1, name2] for name1, name2 in permutations(names, 2)]
-#     # Populate name pairs with data from prefs_data.
-#     # If no preference was given between two people then mark that as a 0
-#     for pref_row in preference_data:
-#         for pair_row in all_pairs:
-#             if pref_row[0] == pair_row[0] and pref_row[1] == pair_row[1]:
-#                 pair_row.append(pref_row[2])
-#     for row in all_pairs:
-#         if len(row) < 3:
-#             row.append("0")
-#     return all_pairs
-
-
 def build_tent_spots(tents_data):
     """
     Given the tents data, return a list of all the spots available as a list of tent names \\
@@ -46,29 +27,48 @@ def build_tent_spots(tents_data):
     return result
 
 
-def assign(names, tent_spots):
+def assign(names, spots):
     """
     Associate each person to a tent spot.
     """
     result = []
     for i in range(len(names)):
-        result.append([names[i], tent_spots[i]])
+        result.append([names[i], spots[i]])
     return result
 
 
-def random_swap(tent_spots):
+def swap_up(spots, preferences, old_value):
+    """
+    Go through all possible swaps until one with a higher happiness is found.
+    If all swaps have been tried, return the original assignment
+    """
+    best_spots = spots.copy()
+    for i in range(len(spots)):
+        for j in range(i + 1, len(spots)):
+            spots[i], spots[j] = spots[j], spots[i]  # swap
+            new_value = value(assign(names, spots), preferences)
+            if new_value > old_value:
+                return assign(names, spots)  # Return if a better assignment is found
+            else:
+                spots[i], spots[j] = spots[j], spots[i]  # swap back
+    return assign(names, best_spots)
+
+
+def random_swap(spots):
     # Randomly pick two distinct indices
-    index1, index2 = random.sample(range(len(tent_spots)), 2)
+    index1, index2 = random.sample(range(len(spots)), 2)
     # Ensure the selected elements are different
-    while tent_spots[index1] == tent_spots[index2]:
-        index2 = random.randint(0, len(tent_spots) - 1)
+    while spots[index1] == spots[index2]:
+        index2 = random.randint(0, len(spots) - 1)
     # Swap the elements at the selected indices
-    tent_spots[index1], tent_spots[index2] = tent_spots[index2], tent_spots[index1]
-    return tent_spots
+    spots[index1], spots[index2] = spots[index2], spots[index1]
+    return spots
 
 
-def rand_assignment(names, tent_spots):
-    return assign(names, random_swap(tent_spots))
+def rand_assignment(names, spots):
+    random_swap(spots)
+    assignment = assign(names, spots)
+    return assignment
 
 
 def split_on_tents(assignment):
@@ -121,30 +121,33 @@ def value(assignment, preferences):
     return value
 
 
-def are_arrays_same(array1, array2):
-    """
-    Return whether or not two arrays have the same elements.
-    """
-    # Convert each array to a set of tuples for comparison
-    set1 = set(map(tuple, array1))
-    set2 = set(map(tuple, array2))
-
-    # Compare the sets
-    return set1 == set2
+def display(max_value, restarts, assignment):
+    # Sort the array based on the letter on the right
+    sorted_data = sorted(assignment, key=lambda x: x[1])
+    print(f"\nRestarts: {restarts}\n")
+    print(f"{max_value}")
+    for name, letter in sorted_data:
+        print(f"{name} : {letter}")
+    print()
 
 
 if __name__ == "__main__":
-    BEST_HAPPINESS = 140
+    GOAL_VALUE = 160
+    HILL_HEIGHT = 2  # number of times to swap to a better position before taking the score and restarting
 
     preference_data = read_csv("tents-prefs.csv")
     tents_data = read_csv("tents-sizes.csv")
     spots = build_tent_spots(tents_data)
     names = sorted(list(set(row[0] for row in preference_data)))
-    happiness = 0
-    assignment = []
-    while happiness < BEST_HAPPINESS:
+
+    local_max_value = 0  # highest value found from the last local search
+    restarts = 0  # number of times the local search is restarted
+
+    while local_max_value < GOAL_VALUE:
+        restarts += 1
         assignment = rand_assignment(names, spots)
-        happiness = value(assignment, preference_data)
-    print(f"YAY you found happiness of at least {BEST_HAPPINESS}")
-    print(assignment)
-    print(happiness)
+        for _ in range(HILL_HEIGHT):
+            assignment = swap_up(spots, preference_data, local_max_value)
+        local_max_value = value(assignment, preference_data)
+
+    display(local_max_value, restarts, assignment)
