@@ -163,30 +163,39 @@ def search(GOAL_VALUE, HILL_HEIGHT, spots, names, pref_data):
 
 if __name__ == "__main__":
     # Process arguments.
-    parser = argparse.ArgumentParser(description="VW Bug Puzzle.")
-    parser.add_argument("--verbose", "-v", action="store_true", help="show solution")
-    parser.add_argument("--test", "-a", action="store_true", help="show solution")
+    parser = argparse.ArgumentParser(description="Tentmates")
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Show the number of restarts that happened or, if in test mode, \
+            show the timings of each test",
+    )
+    parser.add_argument(
+        "--test",
+        type=int,
+        default=None,
+        help="The number of timing test to run. Leave blank to not run in test mode.",
+    )
     parser.add_argument(
         "--goal",
         type=int,
         default=175,
-        help="The the assignment value to search for. Between 0 and 175)",
+        help="The the goal minimum accepted assignment value to search for. \
+        Between 0 and 175)",
     )
     parser.add_argument(
-        "--height",
+        "--swaps",
         type=int,
         default=2,
-        help="How many consecutive 'swaps to a better state' to do before restart",
+        help="Number of consecutive swaps to a better state allowed before restart",
     )
 
     args = parser.parse_args()
     VERBOSE = args.verbose
-    TEST = args.test
-    GOAL_VALUE = args.goal
+    TEST_RUNS = args.test
+    GOAL = args.goal
     # number of times to swap to a better position before taking the score and restarting
-    HILL_HEIGHT = args.height
-
-    NUM_OF_TEST_RUNS = 10
+    SWAPS = args.swaps
     test_results = []
 
     preference_data = read_csv("tents-prefs.csv")
@@ -194,16 +203,16 @@ if __name__ == "__main__":
     spots = build_tent_spots(tents_data)
     names = sorted(list(set(row[0] for row in preference_data)))
 
-    if TEST == False:
-        result = search(GOAL_VALUE, HILL_HEIGHT, spots, names, preference_data)
+    if TEST_RUNS == None:
+        result = search(GOAL, SWAPS, spots, names, preference_data)
         display(result, VERBOSE)
     else:
-        for _ in range(NUM_OF_TEST_RUNS):
+        for _ in range(TEST_RUNS):
             start = time.perf_counter()
-            result = search(GOAL_VALUE, HILL_HEIGHT, spots, names, preference_data)
+            result = search(GOAL, SWAPS, spots, names, preference_data)
             stop = time.perf_counter()
             test_results.append(stop - start)
             local_max_value = result[0]
             if VERBOSE:
                 print(f"Time: {stop-start:0.2f},    Score: {local_max_value} ")
-        test_display(test_results, NUM_OF_TEST_RUNS, GOAL_VALUE, HILL_HEIGHT)
+        test_display(test_results, TEST_RUNS, GOAL, SWAPS)
