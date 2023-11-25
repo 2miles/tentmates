@@ -123,8 +123,11 @@ def value(assignment, preferences):
     return value
 
 
-def display(max_value, restarts, assignment, verbose):
+def display(result, verbose):
     # Sort the array based on the letter on the right
+    restarts = result[2]
+    assignment = result[1]
+    max_value = result[0]
     sorted_data = sorted(assignment, key=lambda x: x[1])
     if verbose:
         print(f"\nRestarts: {restarts}")
@@ -145,48 +148,64 @@ def test_display(test_results, num_tests, goal_value, hill_height):
     print(f"Average:     {average:0.4f}")
 
 
+def search(GOAL_VALUE, HILL_HEIGHT, spots, names, pref_data):
+    restarts = 0  # number of times the local search is restarted
+    local_max_value = 0  # highest value found from the last local search
+
+    while local_max_value < GOAL_VALUE:
+        restarts += 1
+        assignment = rand_assignment(names, spots)
+        for _ in range(HILL_HEIGHT):
+            assignment = swap_up(spots, pref_data, local_max_value)
+        local_max_value = value(assignment, pref_data)
+    return (local_max_value, assignment, restarts)
+
+
 if __name__ == "__main__":
     # Process arguments.
     parser = argparse.ArgumentParser(description="VW Bug Puzzle.")
     parser.add_argument("--verbose", "-v", action="store_true", help="show solution")
     parser.add_argument("--test", "-a", action="store_true", help="show solution")
+    parser.add_argument(
+        "--goal",
+        type=int,
+        help="The the assignment value to search for. Between 0 and 175)",
+    )
+    parser.add_argument(
+        "--height",
+        type=int,
+        help="How many consecutive 'swaps to a better state' to do before restart",
+    )
+
     args = parser.parse_args()
     VERBOSE = args.verbose
     TEST = args.test
+    GOAL_VALUE = args.goal
+    # number of times to swap to a better position before taking the score and restarting
+    HILL_HEIGHT = args.height
 
     NUM_OF_TEST_RUNS = 10
+    if GOAL_VALUE == None:
+        GOAL_VALUE = 175
+    if HILL_HEIGHT == None:
+        HIll_HEIGHT = 2
     test_results = []
-
-    GOAL_VALUE = 170
-    HILL_HEIGHT = 3  # number of times to swap to a better position before taking the score and restarting
 
     preference_data = read_csv("tents-prefs.csv")
     tents_data = read_csv("tents-sizes.csv")
     spots = build_tent_spots(tents_data)
     names = sorted(list(set(row[0] for row in preference_data)))
 
-    local_max_value = 0  # highest value found from the last local search
-    restarts = 0  # number of times the local search is restarted
-
     if TEST == False:
-        while local_max_value < GOAL_VALUE:
-            restarts += 1
-            assignment = rand_assignment(names, spots)
-            for _ in range(HILL_HEIGHT):
-                assignment = swap_up(spots, preference_data, local_max_value)
-            local_max_value = value(assignment, preference_data)
-        display(local_max_value, restarts, assignment, VERBOSE)
+        result = search(GOAL_VALUE, HILL_HEIGHT, spots, names, preference_data)
+        display(result, VERBOSE)
     else:
         for _ in range(NUM_OF_TEST_RUNS):
             start = time.perf_counter()
-            local_max_value = 0
-            while local_max_value < GOAL_VALUE:
-                assignment = rand_assignment(names, spots)
-                for _ in range(HILL_HEIGHT):
-                    assignment = swap_up(spots, preference_data, local_max_value)
-                local_max_value = value(assignment, preference_data)
+            result = search(GOAL_VALUE, HILL_HEIGHT, spots, names, preference_data)
             stop = time.perf_counter()
             test_results.append(stop - start)
+            local_max_value = result[0]
             if VERBOSE:
-                print(f"Time: {stop-start:0.2f},    Max: {local_max_value} ")
+                print(f"Time: {stop-start:0.2f},    Score: {local_max_value} ")
         test_display(test_results, NUM_OF_TEST_RUNS, GOAL_VALUE, HILL_HEIGHT)
