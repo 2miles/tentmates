@@ -169,11 +169,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--goal",
         type=int,
+        default=175,
         help="The the assignment value to search for. Between 0 and 175)",
     )
     parser.add_argument(
         "--height",
         type=int,
+        default=2,
         help="How many consecutive 'swaps to a better state' to do before restart",
     )
 
@@ -185,10 +187,6 @@ if __name__ == "__main__":
     HILL_HEIGHT = args.height
 
     NUM_OF_TEST_RUNS = 10
-    if GOAL_VALUE == None:
-        GOAL_VALUE = 175
-    if HILL_HEIGHT == None:
-        HIll_HEIGHT = 2
     test_results = []
 
     preference_data = read_csv("tents-prefs.csv")
