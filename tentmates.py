@@ -93,6 +93,7 @@ def split_on_tents(assignment):
 def individual_value(person1, person2, preferences):
     """
     Calculate one persons happiness value for another person.
+    If no preference given in data then return 0.
     """
     value = 0
     for row in preferences:
@@ -104,7 +105,7 @@ def individual_value(person1, person2, preferences):
 
 def tent_value(tent, preferences):
     """
-    Calculate the happiness value for an individual tent, given the preference data
+    Calculate the total happiness value for a group.
     """
     total = 0
     for i in range(len(tent)):
@@ -115,7 +116,9 @@ def tent_value(tent, preferences):
 
 
 def value(assignment, preferences):
-    # split into seperate lists for each tent
+    """
+    Get the total value for an assignment.
+    """
     value = 0
     tent_groups = split_on_tents(assignment)
     for tent in tent_groups:
@@ -125,40 +128,46 @@ def value(assignment, preferences):
 
 def display(result, verbose):
     # Sort the array based on the letter on the right
+    print()
     restarts = result[2]
     assignment = result[1]
     max_value = result[0]
     sorted_data = sorted(assignment, key=lambda x: x[1])
     if verbose:
         print(f"\nRestarts: {restarts}")
-    print()
+        print()
     print(f"{max_value}")
     for name, letter in sorted_data:
         print(f"{name} : {letter}")
     print()
 
 
-def test_display(test_results, num_tests, goal_value, hill_height):
+def test_display(test_results, num_tests):
     total = 0
+    print()
     for result in test_results:
         total += result
     average = total / num_tests
-    print(f"Goal Value:  {goal_value}")
-    print(f"Hill Height: {hill_height}")
-    print(f"Average:     {average:0.4f}")
+    print(f"Average time: {average:0.4f}\n")
 
 
-def search(GOAL_VALUE, HILL_HEIGHT, spots, names, pref_data):
-    restarts = 0  # number of times the local search is restarted
-    local_max_value = 0  # highest value found from the last local search
+def search(goal, swaps, spots, names, pref_data):
+    """
+    Run the local searches until an assignment with a value at least as high \
+    as the goal is found. \\
+    Returns tuple (local_max, assignment, num_restarts)
+    """
+    restarts = 0
+    local_max = 0  # highest value found from the last local search
 
-    while local_max_value < GOAL_VALUE:
+    while local_max < goal:
         restarts += 1
+        ## After every restart randomize the assignment.
         assignment = rand_assignment(names, spots)
-        for _ in range(HILL_HEIGHT):
-            assignment = swap_up(spots, pref_data, local_max_value)
-        local_max_value = value(assignment, pref_data)
-    return (local_max_value, assignment, restarts)
+        for _ in range(swaps):
+            assignment = swap_up(spots, pref_data, local_max)
+        local_max = value(assignment, pref_data)
+    return (local_max, assignment, restarts)
 
 
 if __name__ == "__main__":
@@ -207,6 +216,9 @@ if __name__ == "__main__":
         result = search(GOAL, SWAPS, spots, names, preference_data)
         display(result, VERBOSE)
     else:
+        print()
+        print(f"goal value: {GOAL}")
+        print()
         for _ in range(TEST_RUNS):
             start = time.perf_counter()
             result = search(GOAL, SWAPS, spots, names, preference_data)
@@ -215,4 +227,4 @@ if __name__ == "__main__":
             local_max_value = result[0]
             if VERBOSE:
                 print(f"Time: {stop-start:0.2f},    Score: {local_max_value} ")
-        test_display(test_results, TEST_RUNS, GOAL, SWAPS)
+        test_display(test_results, TEST_RUNS)
