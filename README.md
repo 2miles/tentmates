@@ -9,7 +9,7 @@ The background for this problem is explained [here](https://drdobbs.com/mates/18
 
 ### What I did
 
-- My algorithm randomly assigns people to tents. Then swaps people until its in a better state. It will swap to a better state up to 2 times in a row by default. Then randomly assign people and do it again.
+- My algorithm randomly assigns people to tents. Then makes individual swaps until its in a better state. It will swap to a better state up to 2 times in a row by default. Then randomly assign people and do it again.
 
 ### What is still to be done
 
