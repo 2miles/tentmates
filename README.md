@@ -1,8 +1,8 @@
-# Heart Anomalies
+# Tentmates
 
 ### Miles Whitaker
 
-Homework 3: Machine Learning Question 2.
+Homework 3: state space search question 1.
 CS-441 AI, Nov 2023, Bart Massey
 
 The background for this problem is explained [here](https://drdobbs.com/mates/184410645). It was given by Dennis Sasha in the August 1998 Dr. Dobb's Journal. Given a bunch of campers that need to be packed into tents, and preferences of these campers for tent-mates, find an optimally-happy packing
@@ -40,6 +40,12 @@ bob : e
 carol : e
 jack : e
 nick : e
+```
+
+To run the program with a smaller goal score:
+
+```
+python3 tentmates.py --goal 165
 ```
 
 To run in test mode:
