@@ -23,6 +23,44 @@ To run the program with a default goal score of 175 run the program with no argu
 python3 tentmates.py
 ```
 
+```
+175
+alan : a
+mike : b
+emily : b
+gwenyth : b
+dave : c
+isaac : c
+larry : c
+felicia : d
+kris : d
+olivia : d
+petra : d
+bob : e
+carol : e
+jack : e
+nick : e
+```
+
+To run in test mode:
+
+```
+python3 tentmates.py --test 6 --goal 175 --verbose
+```
+
+```
+goal value: 175
+
+Time: 244.15,   Score: 175
+Time: 37.77,   Score: 175
+Time: 3.66,   Score: 175
+Time: 61.24,   Score: 175
+Time: 224.60,   Score: 175
+Time: 188.09,   Score: 175
+
+Average time: 126.59
+```
+
 ### Arguments:
 
 #### `--verbose`
